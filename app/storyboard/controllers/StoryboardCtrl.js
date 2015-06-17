@@ -2,44 +2,20 @@
 
 angular.module('StoryboardApp.Storyboard')
 
-    .controller('StoryboardCtrl', function() {
+    .controller('StoryboardCtrl', ['StoryService', 'STORY_STATUSES', 'STORY_TYPES',
+        function(StoryService, STORY_STATUSES, STORY_TYPES) {
         var ctrl = this;
 
         function generateId() {
             return '_' + Math.random().toString(36).substr(2, 9);
         }
 
-        ctrl.stories = [
-            {
-                id: 1,
-                title: 'Pierwsza historyjka',
-                description: 'Jakiś opis 1',
-                status: 'To do',
-                type: 'Spike',
-                reporter: 2,
-                assignee: 1,
-                criteria: 'Kryteria a b i c'
+        StoryService.get();
 
-            },
-            {
-                id: 2,
-                title: 'Druga historyjka',
-                description: 'Jakiś opis 2',
-                status: 'In Progress',
-                type: 'Enhancement',
-                reporter: 2,
-                assignee: 1,
-                criteria: 'Kryteria a b'
-            }
-        ];
+        ctrl.stories = StoryService.model;
 
-        ctrl.statuses = [
-            { name: 'To do' },
-            { name: 'In progress' },
-            { name: 'Code review' },
-            { name: 'QA review' },
-            { name: 'Verified' }
-        ];
+        ctrl.statuses = STORY_STATUSES;
+        ctrl.types = STORY_TYPES;
 
         ctrl.selectedStory = null;
         ctrl.editedStory = null;
@@ -85,4 +61,37 @@ angular.module('StoryboardApp.Storyboard')
             ctrl.detailsForm.$setPristine();
         };
 
-    });
+        ctrl.finalizeDrop = function(story) {
+            console.log(story);
+            // update na modelu
+        };
+
+        ctrl.insertStory = function(targetStory, sourceStory, insertBefore) {
+            var sourceIdx, targetIdx;
+
+            if (targetStory === sourceStory) {
+                return;
+            }
+
+            sourceIdx = ctrl.stories.indexOf(sourceStory);
+            targetIdx = ctrl.stories.indexOf(targetStory);
+
+            if (!insertBefore) {
+                targetIdx++;
+            }
+
+            if (sourceIdx >=0 && targetIdx >= 0) {
+                ctrl.stories.splice(sourceIdx, 1);
+                if (targetIdx >= sourceIdx) {
+                    targetIdx--;
+                }
+                ctrl.stories.splice(targetIdx, 0, sourceStory);
+                sourceStory.status = targetStory.status;
+            }
+        };
+
+        ctrl.changeStoryStatus = function(story, status) {
+                story.status = status.name;
+        };
+
+    }]);
